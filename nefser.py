@@ -141,7 +141,7 @@ class Nefser:
 
         # Sending metadata
         s.send(filelength.to_bytes(5, byteorder='big')) #  5 bytes for File length send
-        s.send((originalfilehash + '\n').encode())# 33 bytes for md5 hash + '\n' send
+        s.send((originalfilehash + '\n').encode('utf-8'))# 33 bytes for md5 hash + '\n' send
 
         # Sending file
         with open(self.file_io,'rb') as file:
