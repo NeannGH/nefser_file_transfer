@@ -32,7 +32,7 @@ def progress_barr(received, total):
     progress = int((received / total) * 100)
     blocks = int((received / total) * 30)
     barr = '█' * blocks + '-' * (30 - blocks)
-    print(f"\r[{barr}]{progress}%", end='', flush=True)
+    print(f"\r[#]> [{barr}]{progress}%", end='', flush=True)
 
 # Hash function
 def check_integrity(path):
@@ -70,8 +70,8 @@ class Nefser:
             s.bind((self.ip_fqdn,self.port))
             s.settimeout(self.timeouts)
             s.listen(1)
+            print(f"[#]> TCP server listening on: {self.ip_fqdn}:{self.port}")
             conn, addr = s.accept()
-            print(f"[#]> TCP server listening on: {self.ip_fqdn}:{self.port}...")
             print(f"[#]> Connection received from: {addr[0]}:{addr[1]}")
 
         except TimeoutError:
@@ -118,13 +118,13 @@ class Nefser:
 
     # Send method
     def start_send(self):
-        
+
         # Opening network socket
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
             s.connect((self.ip_fqdn,self.port))
-            print(f"[#]> TCP client connecting on: {self.ip_fqdn}:{self.port}...")
+            print(f"[#]> TCP client connecting on: {self.ip_fqdn}:{self.port}")
 
         except:
             print(f"[#]> Unable to connect to {self.ip_fqdn}:{self.port}")
@@ -138,14 +138,14 @@ class Nefser:
         except:
             print("[#]> File not found.")
             exit()
-        
+
         # Sending metadata
         s.send(filelength.to_bytes(5, byteorder='big')) #  5 bytes for File length send
         s.send((originalfilehash + '\n').encode())# 33 bytes for md5 hash + '\n' send
-        
+
         # Sending file
         with open(self.file_io,'rb') as file:
-            
+
             sent_bytes = 0
             while sent_bytes < filelength:
                 data = file.read(1024)
@@ -157,10 +157,10 @@ class Nefser:
 
                 sent_bytes += len(data)
                 progress_barr(sent_bytes,filelength)
-        
+
         # Receiving hash validation
         hashvalidation = s.recv(1024).decode().strip()
-        
+
         if hashvalidation == 'COR':
             print(f"\n[#]> file sent successfully | MD5 Check status: {"\033[41m"}(Corrupted file){"\033[0m"}")
 
@@ -187,56 +187,56 @@ if __name__ == '__main__':
                     if i == '-i':
 
                         try:
-                            
+
                             if len(sys.argv[sys.argv.index('-i')+1].split('.')) == 4 and all(item.isnumeric() and int(item) >= 0 <= 255 for item in sys.argv[sys.argv.index('-i')+1].split('.')): # IPv4 Validation
                                 args['ip_fqdn'] = str(sys.argv[sys.argv.index('-i')+1])
-                                
+
                             elif len(str(sys.argv[sys.argv.index('-i') + 1])) < 255 and '.' in str(sys.argv[sys.argv.index('-i')+1]):
                                 args['ip_fqdn'] = socket.gethostbyname(str(sys.argv[sys.argv.index('-i')+1]))
-                                
+
                             else:
                                 print("[#]> It's not a valid IP address or domain name.")
                                 exit()
-                                
+
                         except (IndexError, ValueError, socket.gaierror):
                             print("[#]> This option requieres a valid [host] specification.")
                             exit()
 
                     elif i == '-p':
-                        
+
                         try:
-                            
+
                             if 1 < int(sys.argv[sys.argv.index('-p') + 1]) < 65535:
                                 args['port'] = int(sys.argv[sys.argv.index('-p')+1])
-                                
+
                             else:
                                 print("[#]> Reserved or invalid port.")
                                 exit()
-                                
+
                         except (IndexError, ValueError):
                                 print("[#]> This option requieres a valid [port] specification.")
                                 exit()
 
                     elif i == '-t':
-                        
+
                         try:
                             args['timeouts'] = int(sys.argv[sys.argv.index('-t')+1])
-                            
+
                         except (IndexError, ValueError):
                             print("[#]> This option requieres a [timeout] specification.")
                             exit()
 
                     elif i == '-send' or i == '-recv':
-                        
+
                         try:
                             if not any(c in ["<", ">", "\"","\'","|","?","*"] for c in sys.argv[sys.argv.index(i)+1]):
                                 args['file_io'] = str(sys.argv[sys.argv.index(i) + 1])
                                 args['operation_type'] = str(i)
-                                
+
                             else:
                                 print("[#]> You can't use special caracters.")
                                 exit()
-                                
+
                         except IndexError:
                             print("[#]> This option requieres a [file] specification.")
                             exit()
@@ -246,7 +246,7 @@ if __name__ == '__main__':
                         exit()
 
                 myclassobject = Nefser(**args)
-                
+
                 if '-send' in args.values():
                     myclassobject.start_send()
 
