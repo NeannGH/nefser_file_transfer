@@ -85,7 +85,7 @@ class Nefser:
 
         # Receiving metadata
         filelength = int.from_bytes(conn.recv(5), byteorder='big') # Fist 5 bytes is always the file length (5bytes = 1 TB)
-        originalfilehash = conn.recv(1024).decode().strip()  # Next 33 bytes is always the file hash + '\n' (33 bytes)
+        originalfilehash = conn.makefile().readline().strip()  # Next 33 bytes is always the file hash + '\n' (33 bytes)
 
         # File exists validation
         if os.path.isfile(self.file_io): # If file exists, creates a new file with _copy_ as a prefix
