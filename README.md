@@ -7,7 +7,7 @@
 
 ## ✅ Requirements
 
-- Python installed on both machines (sender and receiver)
+- If you don't have Python installed on your machine, use the executable version.
 
 ---
 
