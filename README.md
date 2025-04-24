@@ -65,23 +65,25 @@ python3 nefser.py -send file.txt -i 127.0.0.1 -p 5050
 - Works on LAN and over the internet if port forwarding is properly configured.
 
 ---
-## 📡 How it works?
-This script follows a 6-step process to send or receive data reliably between a Sender and a Receiver.
+## 📡 How it works
 
-📨 Sender Workflow
-1 - Establish connection — Perform a three-way handshake.
-2 - Send file length — Transmit 5 bytes indicating the length of the file.
-3 - Send hash — Transmit 33 bytes consisting of the MD5 hash of the file followed by a newline character (\n).
-4 - Send file — Send the actual file data.
-5 - Validate (optional) — Wait for hash validation response from the receiver (if applicable).
-6 - Close connection — Gracefully close the connection.
+This script follows a 6-step process to send or receive data reliably between a **Sender** and a **Receiver**.
 
-📥 Receiver Workflow
-1 - Establish connection — Perform a three-way handshake.
-2 - Receive file length — Read 5 bytes indicating the length of the file.
-3 - Receive hash — Read 33 bytes containing the MD5 hash and newline character (\n).
-4 - Receive file — Receive the actual file data.
-5 - Validate (optional) — Send hash validation result back to the sender (if applicable).
-6 - Close connection — Gracefully close the connection.
+### 📨 Sender Workflow
+1. **Establish connection** — Perform a three-way handshake.  
+2. **Send file length** — Transmit 5 bytes indicating the length of the file.  
+3. **Send hash** — Transmit 33 bytes consisting of the MD5 hash of the file followed by a newline character (`\n`).  
+4. **Send file** — Send the actual file data.  
+5. **Validate (optional)** — Wait for hash validation response from the receiver (if applicable).  
+6. **Close connection** — Gracefully close the connection.
+
+### 📥 Receiver Workflow
+1. **Establish connection** — Perform a three-way handshake.  
+2. **Receive file length** — Read 5 bytes indicating the length of the file.  
+3. **Receive hash** — Read 33 bytes containing the MD5 hash and newline character (`\n`).  
+4. **Receive file** — Receive the actual file data.  
+5. **Validate (optional)** — Send hash validation result back to the sender (if applicable).  
+6. **Close connection** — Gracefully close the connection.
+
 ---
 Made by NeannGH
