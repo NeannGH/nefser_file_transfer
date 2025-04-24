@@ -82,11 +82,18 @@ class Nefser:
 
         except:
             print("[#]> Error creating socket. Check PERMISSIONS, DNS, IP/FQDN and PORT.")
+            s.close()
             exit()
 
         # Receiving metadata
-        filelength = int.from_bytes(conn.recv(5), byteorder='big') # Fist 5 bytes is always the file length (5bytes = 1 TB)
-        originalfilehash = conn.recv(33).decode().strip()  # Next 33 bytes is always the file hash + '\n' (33 bytes)
+        try:
+            filelength = int.from_bytes(conn.recv(5), byteorder='big') # Fist 5 bytes is always the file length (5bytes = 1 TB)
+            originalfilehash = conn.recv(33).decode().strip()  # Next 33 bytes is always the file hash + '\n' (33 bytes)
+        except:
+            print("[#]> An error occurred while receiving metadata.")
+            conn.close()
+            s.close()
+            exit()
 
         # File exists validation
         if os.path.isfile(self.file_io): # If file exists, creates a new file with _copy_ as a prefix
@@ -96,35 +103,42 @@ class Nefser:
         with open(self.file_io,'wb') as file:
             received_bytes = 0
             while received_bytes < filelength:
-                msg = conn.recv(min(1024, filelength - received_bytes)) # Connection always receive the missing bytes
+                try:
+                    msg = conn.recv(min(1024, filelength - received_bytes)) # Connection always receive the missing bytes
+                except:
+                    print("\n[#]> Network error, no bytes detected, check if the sender is sending data correctly.")
+                    conn.close()  # Close client socket
+                    s.close()  # Close listening socket
+                    exit()
+
                 if not msg:
                     print("\n[#]> Network error, could not receive all expected bytes.")
+                    conn.close() # Close client socket
+                    s.close() # Close listening socket
                     exit()
 
                 file.write(msg)
                 received_bytes += len(msg)
                 progress_barr(received_bytes,filelength)
 
-        # Integrity validation
+        sleep(0.1) # Avoid Dup ACKs
+        conn.shutdown(socket.SHUT_RD) # Close the receiving side of the socket. Can't read data anymore, just send.
+
+        # Sending integrity validation
         if check_integrity(self.file_io) != originalfilehash:
             print(f"\n[#]> Received file | MD5 Check status: {"\033[41m"}(Corrupted file){"\033[0m"}")
-            conn.send('COR\n'.encode())
-            sleep(0.1) # Avoid Dup ACKs
-            s.close()
-            exit()
+            conn.send('COR\n'.encode()) # Send info
 
         elif check_integrity(self.file_io) == originalfilehash:
             print(f"\n[#]> Received file | MD5 Check status: {"\033[32m"}(Valid file){"\033[0m"}")
-            conn.send('VAL\n'.encode())
-            sleep(0.1)  # Avoid Dup ACKs
-            s.close()
-            exit()
+            conn.send('VAL\n'.encode()) # Send info
 
         else:
             print(f"\n[#]> Received file | MD5 Check status: Unable to validate integrity")
-            sleep(0.1)  # Avoid Dup ACKs
-            s.close()
-            exit()
+
+        conn.close() # Close client socket
+        s.close() # Close listening socket
+        exit() # Exit program
 
     # Send method
     def start_send(self):
@@ -147,7 +161,7 @@ class Nefser:
             originalfilehash = check_integrity(self.file_io)
 
         except:
-            print("[#]> File not found.")
+            print("[#]> File not found or inaccessible.")
             s.close()
             exit()
 
@@ -165,40 +179,34 @@ class Nefser:
                     s.sendall(data)
                 except:
                     print("\n[#]> Network error, could not send all bytes.")
-                    sleep(0.1)
                     s.close()
                     exit()
 
                 sent_bytes += len(data)
                 progress_barr(sent_bytes,filelength)
 
+        sleep(0.1) # Avoid Dup ACKs
+        s.shutdown(socket.SHUT_WR) # Close socket sender side. Can't send data anymore, just receive.
+
         # Receiving hash validation
         try:
             hashvalidation = s.recv(1024).decode().strip()
         except socket.timeout:
             print(f"\n[#]> File sent successfully | MD5 Check status: Receiver didn't send any validation")
-            sleep(0.1)  # Avoid Dup ACKs
             s.close()
             exit()
 
         if hashvalidation == 'COR':
             print(f"\n[#]> File sent successfully | MD5 Check status: {"\033[41m"}(Corrupted file){"\033[0m"}")
-            sleep(0.1)  # Avoid Dup ACKs
-            s.close()
-            exit()
 
         elif hashvalidation == 'VAL':
             print(f"\n[#]> File sent successfully | MD5 Check status: {"\033[32m"}(Valid file){"\033[0m"}")
-            sleep(0.1)  # Avoid Dup ACKs
-            s.close()
-            exit()
 
         else:
             print(f"\n[#]> File sent successfully | MD5 Check status: Receiver was unable to validate file")
-            sleep(0.1) # Avoid Dup ACKs
-            s.close()
-            exit()
 
+        s.close() # Close socket
+        exit() # Exit program
 
 # Command line execute
 if __name__ == '__main__':
