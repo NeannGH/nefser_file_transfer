@@ -5,12 +5,6 @@
 
 ---
 
-## ✅ Requirements
-
-- If you don't have Python installed on your machine, use the executable version.
-
----
-
 ## 🚀 How to Use
 
 ```bash
@@ -39,22 +33,6 @@ If no arguments are provided, the default command is:
 
 ```bash
 python3 nefser.py -recv nefser.bytes -i 0.0.0.0 -p 8080 -t 10
-```
-
----
-
-## 💡 Examples
-
-Receive a file:
-
-```bash
-python3 nefser.py -recv file.txt -p 5050 -t 50
-```
-
-Send a file:
-
-```bash
-python3 nefser.py -send file.txt -i 127.0.0.1 -p 5050
 ```
 
 ---
