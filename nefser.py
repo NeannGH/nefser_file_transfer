@@ -1,4 +1,5 @@
 import socket, sys, os, hashlib
+from time import sleep
 
 # Banner
 helpbanner ="""
@@ -108,17 +109,20 @@ class Nefser:
         if check_integrity(self.file_io) != originalfilehash:
             print(f"\n[#]> Received file | MD5 Check status: {"\033[41m"}(Corrupted file){"\033[0m"}")
             conn.send('COR\n'.encode())
+            sleep(0.1) # Avoid Dup ACKs
             s.close()
             exit()
 
         elif check_integrity(self.file_io) == originalfilehash:
             print(f"\n[#]> Received file | MD5 Check status: {"\033[32m"}(Valid file){"\033[0m"}")
             conn.send('VAL\n'.encode())
+            sleep(0.1)  # Avoid Dup ACKs
             s.close()
             exit()
 
         else:
             print(f"\n[#]> Received file | MD5 Check status: Unable to validate integrity")
+            sleep(0.1)  # Avoid Dup ACKs
             s.close()
             exit()
 
@@ -127,6 +131,7 @@ class Nefser:
 
         # Opening network socket
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(self.timeouts)
 
         try:
             s.connect((self.ip_fqdn,self.port))
@@ -143,6 +148,7 @@ class Nefser:
 
         except:
             print("[#]> File not found.")
+            s.close()
             exit()
 
         # Sending metadata
@@ -159,26 +165,37 @@ class Nefser:
                     s.sendall(data)
                 except:
                     print("\n[#]> Network error, could not send all bytes.")
+                    sleep(0.1)
+                    s.close()
                     exit()
 
                 sent_bytes += len(data)
                 progress_barr(sent_bytes,filelength)
 
         # Receiving hash validation
-        hashvalidation = s.recv(1024).decode().strip()
+        try:
+            hashvalidation = s.recv(1024).decode().strip()
+        except socket.timeout:
+            print(f"\n[#]> File sent successfully | MD5 Check status: Receiver didn't send any validation")
+            sleep(0.1)  # Avoid Dup ACKs
+            s.close()
+            exit()
 
         if hashvalidation == 'COR':
-            print(f"\n[#]> file sent successfully | MD5 Check status: {"\033[41m"}(Corrupted file){"\033[0m"}")
+            print(f"\n[#]> File sent successfully | MD5 Check status: {"\033[41m"}(Corrupted file){"\033[0m"}")
+            sleep(0.1)  # Avoid Dup ACKs
             s.close()
             exit()
 
         elif hashvalidation == 'VAL':
-            print(f"\n[#]> file sent successfully | MD5 Check status: {"\033[32m"}(Valid file){"\033[0m"}")
+            print(f"\n[#]> File sent successfully | MD5 Check status: {"\033[32m"}(Valid file){"\033[0m"}")
+            sleep(0.1)  # Avoid Dup ACKs
             s.close()
             exit()
 
         else:
-            print(f"\n[#]> file sent successfully | MD5 Check status: Unable to validate integrity")
+            print(f"\n[#]> File sent successfully | MD5 Check status: Receiver was unable to validate file")
+            sleep(0.1) # Avoid Dup ACKs
             s.close()
             exit()
 
