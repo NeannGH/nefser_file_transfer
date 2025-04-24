@@ -108,13 +108,19 @@ class Nefser:
         if check_integrity(self.file_io) != originalfilehash:
             print(f"\n[#]> Received file | MD5 Check status: {"\033[41m"}(Corrupted file){"\033[0m"}")
             conn.send('COR\n'.encode())
+            s.close()
+            exit()
 
         elif check_integrity(self.file_io) == originalfilehash:
             print(f"\n[#]> Received file | MD5 Check status: {"\033[32m"}(Valid file){"\033[0m"}")
             conn.send('VAL\n'.encode())
+            s.close()
+            exit()
 
         else:
             print(f"\n[#]> Received file | MD5 Check status: Unable to validate integrity")
+            s.close()
+            exit()
 
     # Send method
     def start_send(self):
@@ -141,7 +147,7 @@ class Nefser:
 
         # Sending metadata
         s.send(filelength.to_bytes(5, byteorder='big')) #  5 bytes for File length send
-        s.send((originalfilehash + '\n').encode())# 33 bytes for md5 hash + '\n' send
+        s.send((originalfilehash + '\n').encode()) # 33 bytes for md5 hash + '\n' send
 
         # Sending file
         with open(self.file_io,'rb') as file:
@@ -163,12 +169,18 @@ class Nefser:
 
         if hashvalidation == 'COR':
             print(f"\n[#]> file sent successfully | MD5 Check status: {"\033[41m"}(Corrupted file){"\033[0m"}")
+            s.close()
+            exit()
 
         elif hashvalidation == 'VAL':
             print(f"\n[#]> file sent successfully | MD5 Check status: {"\033[32m"}(Valid file){"\033[0m"}")
+            s.close()
+            exit()
 
         else:
             print(f"\n[#]> file sent successfully | MD5 Check status: Unable to validate integrity")
+            s.close()
+            exit()
 
 
 # Command line execute
